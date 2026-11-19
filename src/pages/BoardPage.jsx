@@ -1,183 +1,369 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+
 import Column from "../components/Column.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import useTaskFilter from "../hooks/useTaskFilter.js";
 
-function BoardPage({ tasks }) {
-  // Separate tasks according to their status
-  const todoTasks = tasks.filter(
-    (task) => task.status === "todo" && !task.archived,
-  );
+function BoardPage({ tasks, addTask, moveTask, archiveTask }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [priority, setPriority] = useState("All");
+  const [showForm, setShowForm] = useState(false);
 
-  const inProgressTasks = tasks.filter(
-    (task) => task.status === "in-progress" && !task.archived,
-  );
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Development");
+  const [newPriority, setNewPriority] = useState("Medium");
+  const [status, setStatus] = useState("todo");
 
-  const doneTasks = tasks.filter(
-    (task) => task.status === "done" && !task.archived,
-  );
+  // Do not show archived tasks on the board.
+  const activeTasks = tasks.filter((task) => !task.archived);
 
-  // Calculate total active tasks
-  const totalTasks = tasks.filter((task) => !task.archived).length;
+  // Apply search and priority filters.
+  const filteredTasks = useTaskFilter(activeTasks, searchTerm, priority);
+
+  // Calculate dashboard statistics.
+  const totalTasks = activeTasks.length;
+
+  const todoCount = activeTasks.filter((task) => task.status === "todo").length;
+
+  const progressCount = activeTasks.filter(
+    (task) => task.status === "in-progress",
+  ).length;
+
+  const doneCount = activeTasks.filter((task) => task.status === "done").length;
+
+  // Create a new task.
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!title.trim()) {
+      return;
+    }
+
+    addTask({
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      priority: newPriority,
+      status,
+    });
+
+    setTitle("");
+    setDescription("");
+    setCategory("Development");
+    setNewPriority("Medium");
+    setStatus("todo");
+    setShowForm(false);
+  }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F2] text-[#252923]">
+    <div className="min-h-screen bg-[#F4F7FB] text-[#142D4E]">
       {/* Navigation */}
-      <header className="sticky top-0 z-20 border-b border-[#EAE7DF] bg-white/95 backdrop-blur">
+      <header className="border-b border-[#E3EAF2] bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          {/* Logo and application name */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#252923] text-white shadow-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-6 w-6"
-              >
-                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                <path d="M14 17.5h7M17.5 14v7" />
-              </svg>
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#142D4E] text-white">
+              <span className="text-lg font-bold">T</span>
             </div>
 
             <div>
               <h1 className="text-xl font-bold tracking-tight">TaskDesk</h1>
-              <p className="text-xs text-[#99978F]">
-                Work smarter. Stay organized.
+              <p className="text-xs text-[#8794A5]">
+                Your work, thoughtfully organized.
               </p>
             </div>
-          </div>
+          </Link>
 
-          {/* Workspace information */}
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm font-medium text-[#77766F] sm:block">
-              My Workspace
-            </span>
+          <nav className="flex items-center gap-5">
+            <Link to="/" className="text-sm font-semibold text-[#142D4E]">
+              Board
+            </Link>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EAE7DF] bg-[#E8E0D5] font-semibold text-[#76583C]">
-              N
-            </div>
-          </div>
+            <Link
+              to="/archive"
+              className="text-sm font-medium text-[#718096] transition hover:text-[#142D4E]"
+            >
+              Archive
+            </Link>
+          </nav>
         </div>
       </header>
 
-      {/* Main dashboard */}
-      <main className="mx-auto max-w-7xl px-5 py-10">
-        {/* Welcome section */}
-        <section className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+      <main className="mx-auto max-w-7xl px-5 py-8 sm:py-10">
+        {/* Page heading */}
+        <section className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#C77750]">
-              Workspace overview
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#52759A]">
+              Personal Workspace
             </p>
 
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              My Task Board
+              My Workspace
             </h2>
 
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-[#77766F]">
-              Keep your priorities clear, manage your daily work, and track your
-              progress in one place.
+            <p className="mt-2 text-sm text-[#718096]">
+              Organize your work and keep track of your progress.
             </p>
           </div>
 
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C77750] px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-[#AD6240] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#C77750] focus:ring-offset-2"
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-xl bg-[#142D4E] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#315A83] hover:shadow-md"
           >
-            <span className="text-lg leading-none">+</span>
-            Add New Task
+            + Create Task
           </button>
         </section>
 
         {/* Statistics */}
-        <section className="mb-9 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* Total tasks */}
-          <div className="rounded-2xl border border-[#EAE7DF] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[#77766F]">Total tasks</p>
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8E9E1] text-[#C77750]">
-                <span className="text-xl">▤</span>
-              </span>
-            </div>
-
-            <p className="mt-4 text-3xl font-bold">{totalTasks}</p>
-
-            <p className="mt-1 text-xs text-[#99978F]">
-              Tasks in your workspace
-            </p>
-          </div>
-
-          {/* In progress */}
-          <div className="rounded-2xl border border-[#EAE7DF] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[#77766F]">In progress</p>
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F9EBD7] text-[#95601C]">
-                <span className="text-xl">◷</span>
-              </span>
-            </div>
-
-            <p className="mt-4 text-3xl font-bold text-[#C77750]">
-              {inProgressTasks.length}
-            </p>
-
-            <p className="mt-1 text-xs text-[#99978F]">
-              Tasks currently being worked on
-            </p>
-          </div>
-
-          {/* Completed */}
-          <div className="rounded-2xl border border-[#EAE7DF] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[#77766F]">Completed</p>
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0E8] text-[#527653]">
-                <span className="text-xl">✓</span>
-              </span>
-            </div>
-
-            <p className="mt-4 text-3xl font-bold text-[#527653]">
-              {doneTasks.length}
-            </p>
-
-            <p className="mt-1 text-xs text-[#99978F]">
-              Tasks successfully completed
-            </p>
-          </div>
-        </section>
-
-        {/* Board heading */}
-        <section className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <div>
-            <h3 className="text-lg font-bold">Project board</h3>
-            <p className="mt-1 text-sm text-[#99978F]">
-              Organize and track your tasks by status.
-            </p>
-          </div>
-
-          <p className="text-xs font-medium text-[#77766F]">
-            {totalTasks} active {totalTasks === 1 ? "task" : "tasks"}
-          </p>
-        </section>
-
-        {/* Kanban columns */}
-        <section className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
-          <Column title="To Do" tasks={todoTasks} color="bg-[#C77750]" />
-
-          <Column
-            title="In Progress"
-            tasks={inProgressTasks}
-            color="bg-[#D6A04B]"
+        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Tasks"
+            count={totalTasks}
+            description="All active tasks"
           />
 
-          <Column title="Done" tasks={doneTasks} color="bg-[#6D956E]" />
+          <StatCard
+            title="To Do"
+            count={todoCount}
+            description="Waiting to start"
+          />
+
+          <StatCard
+            title="In Progress"
+            count={progressCount}
+            description="Currently working on"
+          />
+
+          <StatCard
+            title="Completed"
+            count={doneCount}
+            description="Successfully finished"
+          />
         </section>
 
-        {/* Footer */}
-        <footer className="mt-12 border-t border-[#EAE7DF] py-6 text-center">
-          <p className="text-xs text-[#99978F]">
-            © 2026 TaskDesk. Keep your work moving forward.
-          </p>
-        </footer>
+        {/* Create task form */}
+        {showForm && (
+          <section className="mb-8 rounded-2xl border border-[#DCE5F0] bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#142D4E]">
+                  Create a new task
+                </h3>
+
+                <p className="mt-1 text-sm text-[#8794A5]">
+                  Add a task to your workspace.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-[#718096] hover:bg-[#F1F4F8]"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label
+                  htmlFor="task-title"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Task title
+                </label>
+
+                <input
+                  id="task-title"
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="What needs to be done?"
+                  required
+                  className="w-full rounded-xl border border-[#E3EAF2] px-4 py-3 text-sm outline-none focus:border-[#315A83] focus:ring-2 focus:ring-[#EAF0F7]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="task-description"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Description
+                </label>
+
+                <textarea
+                  id="task-description"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Describe your task..."
+                  rows="3"
+                  className="w-full rounded-xl border border-[#E3EAF2] px-4 py-3 text-sm outline-none focus:border-[#315A83] focus:ring-2 focus:ring-[#EAF0F7]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div>
+                  <label
+                    htmlFor="task-category"
+                    className="mb-2 block text-sm font-semibold"
+                  >
+                    Category
+                  </label>
+
+                  <select
+                    id="task-category"
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                    className="w-full rounded-xl border border-[#E3EAF2] bg-white px-4 py-3 text-sm outline-none focus:border-[#315A83]"
+                  >
+                    <option>Development</option>
+                    <option>Design</option>
+                    <option>Planning</option>
+                    <option>Personal</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="task-priority"
+                    className="mb-2 block text-sm font-semibold"
+                  >
+                    Priority
+                  </label>
+
+                  <select
+                    id="task-priority"
+                    value={newPriority}
+                    onChange={(event) => setNewPriority(event.target.value)}
+                    className="w-full rounded-xl border border-[#E3EAF2] bg-white px-4 py-3 text-sm outline-none focus:border-[#315A83]"
+                  >
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="task-status"
+                    className="mb-2 block text-sm font-semibold"
+                  >
+                    Status
+                  </label>
+
+                  <select
+                    id="task-status"
+                    value={status}
+                    onChange={(event) => setStatus(event.target.value)}
+                    className="w-full rounded-xl border border-[#E3EAF2] bg-white px-4 py-3 text-sm outline-none focus:border-[#315A83]"
+                  >
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-[#EDF1F6] pt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="rounded-xl border border-[#E3EAF2] px-5 py-3 text-sm font-semibold text-[#52647A] hover:bg-[#F4F7FB]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="rounded-xl bg-[#142D4E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#315A83]"
+                >
+                  Save Task
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* Search and filter */}
+        <section className="mb-8">
+          <FilterBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            priority={priority}
+            setPriority={setPriority}
+          />
+        </section>
+
+        {/* Kanban board */}
+        <section>
+          <div className="mb-5">
+            <h3 className="text-xl font-bold">Task Board</h3>
+            <p className="mt-1 text-sm text-[#8794A5]">
+              Manage your tasks across different stages.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+            <Column
+              title="To Do"
+              status="todo"
+              tasks={filteredTasks.filter((task) => task.status === "todo")}
+              moveTask={moveTask}
+              archiveTask={archiveTask}
+            />
+
+            <Column
+              title="In Progress"
+              status="in-progress"
+              tasks={filteredTasks.filter(
+                (task) => task.status === "in-progress",
+              )}
+              moveTask={moveTask}
+              archiveTask={archiveTask}
+            />
+
+            <Column
+              title="Done"
+              status="done"
+              tasks={filteredTasks.filter((task) => task.status === "done")}
+              moveTask={moveTask}
+              archiveTask={archiveTask}
+            />
+          </div>
+
+          {filteredTasks.length === 0 && (
+            <p className="mt-5 text-center text-sm text-[#718096]">
+              No tasks match your search or priority filter.
+            </p>
+          )}
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#E3EAF2] bg-white px-5 py-5 text-center">
+        <p className="text-xs text-[#8794A5]">
+          © 2026 TaskDesk. Organize your work, one task at a time.
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+// Reusable statistics card.
+function StatCard({ title, count, description }) {
+  return (
+    <div className="rounded-2xl border border-[#E3EAF2] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <p className="text-sm font-medium text-[#718096]">{title}</p>
+
+      <h3 className="mt-3 text-3xl font-bold text-[#142D4E]">
+        {count.toString().padStart(2, "0")}
+      </h3>
+
+      <p className="mt-2 text-xs text-[#8794A5]">{description}</p>
     </div>
   );
 }

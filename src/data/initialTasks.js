@@ -2,7 +2,7 @@ const initialTasks = [
   {
     id: "1",
     title: "Design the dashboard interface",
-    description: "Create a clean and responsive dashboard layout.",
+    description: "Create a clean and responsive dashboard layout for TaskDesk.",
     status: "todo",
     priority: "High",
     category: "Design",
@@ -22,7 +22,7 @@ const initialTasks = [
   {
     id: "3",
     title: "Build reusable React components",
-    description: "Create reusable components using props.",
+    description: "Create reusable components using React props.",
     status: "in-progress",
     priority: "High",
     category: "Development",
@@ -32,7 +32,7 @@ const initialTasks = [
   {
     id: "4",
     title: "Implement local storage",
-    description: "Save tasks in browser local storage.",
+    description: "Save tasks in the browser so they remain after refreshing.",
     status: "in-progress",
     priority: "Medium",
     category: "Development",
@@ -52,7 +52,7 @@ const initialTasks = [
   {
     id: "6",
     title: "Create the project repository",
-    description: "Initialize Git and create a public repository.",
+    description: "Initialize Git and create a public GitHub repository.",
     status: "done",
     priority: "Low",
     category: "Development",
